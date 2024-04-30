@@ -11,4 +11,6 @@ export const tableHeader = {
   type: "Turi",
   access_filter: "Filter",
   static: "O'zgarmas",
+  measure_type: "O'lchami",
+  calories: "Kaloriyasi",
 };

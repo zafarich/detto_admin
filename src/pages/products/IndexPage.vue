@@ -32,7 +32,14 @@ async function fetchData() {
   loading.value = true;
   await nextTick();
   params.value = { ...params.value, ...tableRef.value.pagination };
-  //   data.value = (await productStore.fetch(params.value)) || [];
+  // data.value = (await productStore.fetch(params.value)) || [];
+  data.value = [
+    {
+      name: "Grechka",
+      measure_type: "gram",
+      calories: 140,
+    },
+  ];
   tableRef.value.rowsNumber = productStore.all_count;
   tableRef.value.prepareHeaders();
   loading.value = false;
@@ -40,14 +47,7 @@ async function fetchData() {
 onMounted(fetchData);
 
 const tableSettings = {
-  defaultColumnOrder: [
-    "fio",
-    "Login",
-    "Role",
-    "Phone_number",
-    "Email",
-    "t_actions",
-  ],
+  defaultColumnOrder: ["name", "measure_type", "calories", "t_actions"],
   formatColumns: {},
   fieldFormatColumns: {},
 };

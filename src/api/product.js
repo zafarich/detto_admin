@@ -5,8 +5,8 @@ export async function fetch(params) {
   return data;
 }
 export async function create(payload) {
-  const { data } = await api.post(url, payload);
-  return data;
+  const res = await api.post(url + "/store", payload);
+  return res;
 }
 export async function updateById(id, payload) {
   const { data } = await api.post(url + "-update/" + id, payload);

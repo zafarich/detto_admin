@@ -116,7 +116,7 @@ function removeUpload() {
     border-radius: 10px;
     position: relative;
     width: 100%;
-    height: 172px;
+    height: 100px;
     border: 2px dashed $border-color;
     display: flex;
     align-items: center;
@@ -170,7 +170,7 @@ function removeUpload() {
   }
   .file-upload-content {
     width: 100%;
-    height: 172px;
+    height: 100px;
     border: 1px solid $border-color;
     border-radius: 10px;
     display: flex;
@@ -180,7 +180,8 @@ function removeUpload() {
     img {
       width: 100%;
       object-fit: contain;
-      max-height: 165px;
+
+      max-height: 93px;
     }
   }
 }

@@ -53,7 +53,7 @@ const tableSettings = {
 };
 
 function productAddedOrChanged() {
-  addEditProductDialog.value = false;
+  // addEditProductDialog.value = false;
   resetFilterAndFetch();
 }
 function editData(data) {
@@ -64,6 +64,8 @@ function request(pagination) {
   params.value = { ...params.value, ...pagination };
   fetchData();
 }
+
+function resetFilterAndFetch() {}
 </script>
 <template>
   <q-page>

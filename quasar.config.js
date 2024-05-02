@@ -1,5 +1,5 @@
-const URL_DEV = "http://cdn.telon.uz/";
-const URL_PROD = "http://cdn.telon.uz/";
+const URL_DEV = "http://cdn.dieto.uz/";
+const URL_PROD = "http://cdn.dieto.uz/";
 
 const ESLintPlugin = require("eslint-webpack-plugin");
 const { configure } = require("quasar/wrappers");
@@ -94,7 +94,7 @@ module.exports = configure(function (ctx) {
       },
 
       builder: {
-        appId: "Telon admin",
+        appId: "Dieto admin",
       },
 
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain

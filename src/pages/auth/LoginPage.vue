@@ -16,7 +16,7 @@ const loginError = ref(false);
 
 const formRef = ref(null);
 const form = reactive({
-  phoneNumber: "",
+  username: "",
   password: "",
   isTrusted: true,
   trusted: false,
@@ -24,14 +24,6 @@ const form = reactive({
 
 const isPwd = ref(true);
 
-const phoneRules = computed(() => {
-  const loginNotError = !loginError.value;
-  const loginOrPassError = () => loginNotError || "Login yoki parol noto'g'ri";
-  const phoneLengthFn = (val) =>
-    trimBetween(val)?.toString()?.length === 9 ||
-    "To'g'ri telefon raqamini kiriting";
-  return [validate.required, loginOrPassError, phoneLengthFn];
-});
 async function tryLogin() {
   resetValidation();
   await sleep(10);
@@ -42,10 +34,10 @@ async function tryLogin() {
 
   try {
     const res = await authStore.login({
-      login: phoneNumberWithPrefix.value,
+      username: form.username,
       password: form.password,
     });
-    const token = res?.token;
+    const token = res?.access_token;
     if (token) {
       router.push({
         name: "dashboard",
@@ -62,8 +54,6 @@ async function tryLogin() {
   }
 }
 
-const phoneNumberWithPrefix = computed(() => trimBetween(form.phoneNumber));
-
 let resetTimeout = 0;
 function resetValidation(timeout = 0) {
   clearTimeout(resetTimeout);
@@ -79,24 +69,14 @@ function resetValidation(timeout = 0) {
     <div class="card">
       <header class="header">Administrator kabineti</header>
       <q-form ref="formRef" class="login-form" @submit.prevent="tryLogin">
-        <div class="form--title">Telefon nomer</div>
+        <div class="form--title">Login</div>
         <BaseInput
-          v-model="form.phoneNumber"
+          v-model="form.username"
           standout="standout-bg-gray"
-          mask="## ### ## ##"
-          name="current-phone-number"
-          type="tel"
-          :rules="phoneRules"
-          no-error-icon
-          prepend
+          :rules="[validate.required]"
           @update:model-value="resetValidation"
           @keyup.enter="tryLogin"
         >
-          <template #prepend>
-            <div class="phone_prefix">
-              {{ PHONE_PREFIX }}
-            </div>
-          </template>
         </BaseInput>
         <div class="form--title">Parol</div>
         <BaseInput

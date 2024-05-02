@@ -1,8 +1,8 @@
 {
-  "name": "Telon",
+  "name": "Dieto",
   "version": "0.0.1",
-  "description": "Telon admin",
-  "productName": "Telon admin",
+  "description": "Dieto admin",
+  "productName": "Dieto admin",
   "author": "Zafar <webzafar6699@gmail.com>",
   "private": true,
   "scripts": {

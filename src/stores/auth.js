@@ -12,7 +12,8 @@ export const useAuthStore = defineStore("auth", () => {
   const isAuth = computed(() => !!token.value);
   async function login(payload) {
     const res = await api.login(payload);
-    const token = res?.token;
+
+    const token = res?.access_token;
     if (token) {
       setToken(token);
       me();

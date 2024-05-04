@@ -3,7 +3,7 @@ import axios from "axios";
 import { getTokenFromCache } from "src/utils/auth";
 import { Notify } from "quasar";
 import { getServerError } from "src/utils/helpers";
-const api = axios.create({ baseURL: process.env.API });
+const api = axios.create({ baseURL: process.env.BASE_URL });
 import { useAuthStore } from "stores/auth";
 export default boot(({ app }) => {
   const authStore = useAuthStore();

@@ -180,8 +180,6 @@ defineExpose({
       color=""
       direction-links
       class="table-pagination"
-      icon-prev="img:/images/icons/chevron_left_16.svg"
-      icon-next="img:/images/icons/chevron_right_16.svg"
     />
     <div class="flex items-center">
       <div class="text-xs text-687588 mr-4">Ko'rsatish</div>
@@ -333,7 +331,7 @@ defineExpose({
     }
     tbody {
       td {
-        padding: 12px;
+        padding: 8px;
         border-bottom-color: $gray-6 !important;
         &::before {
           // background-color: $gray-4 !important;

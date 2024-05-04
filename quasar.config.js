@@ -3,7 +3,10 @@ const URL_PROD = "http://cdn.dieto.uz/";
 
 const ESLintPlugin = require("eslint-webpack-plugin");
 const { configure } = require("quasar/wrappers");
+const path = require("path");
+require("dotenv").config();
 
+const BASE_URL = process.env.BASE_URL;
 module.exports = configure(function (ctx) {
   return {
     supportTS: false,
@@ -26,7 +29,7 @@ module.exports = configure(function (ctx) {
     build: {
       vueRouterMode: "history", // available values: 'hash', 'history'
       env: {
-        API: ctx.dev ? URL_DEV : URL_PROD,
+        BASE_URL: BASE_URL,
       },
 
       chainWebpack(chain) {

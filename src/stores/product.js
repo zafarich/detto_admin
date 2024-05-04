@@ -7,7 +7,7 @@ export const useProductStore = defineStore("product", () => {
 
   async function fetch(params = { limit: 20 }) {
     const res = await api.fetch(params);
-    all_count.value = res.all_count;
+    all_count.value = res.total_items;
     return res?.result;
   }
 

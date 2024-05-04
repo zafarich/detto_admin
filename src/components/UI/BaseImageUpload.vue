@@ -71,9 +71,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue"]);
 const showImageUploadWrap = ref(!props.urlImage);
-const loadedImage = ref(
-  props.urlImage ? mainStore?.baseURL + props.urlImage : "#"
-);
+const loadedImage = ref(props.urlImage ? props.urlImage : "#");
 
 function readURL(file) {
   if (file) {

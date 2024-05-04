@@ -11,10 +11,10 @@ const props = defineProps({
 </script>
 <template>
   <BaseImg
-    :src="mainStore?.baseURL + props?.propsData?.row?.image"
+    :src="props?.propsData?.row?.image"
     :alt="props?.propsData?.row?.image + '-locale-icon'"
-    width="70px"
-    height="70px"
+    width="50px"
+    height="50px"
   />
 </template>
 

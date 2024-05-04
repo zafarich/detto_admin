@@ -10,6 +10,7 @@ import validate from "src/utils/validate";
 import {
   MEASURE_TYPE_TEXT,
   MEASURE_CUP_TEXT,
+  PER_TEXT_STATUS,
   MEASURE_TYPE_3,
   MEASURE_TYPE_2,
 } from "src/types/productTypes";
@@ -23,7 +24,7 @@ const props = defineProps({
   },
 });
 const $q = useQuasar();
-const emit = defineEmits(["added"]);
+const emit = defineEmits(["change"]);
 const productCategory = useProductStore();
 
 const measure_types = Object.entries(MEASURE_TYPE_TEXT).map((v) => ({
@@ -36,6 +37,13 @@ const measure_cup_types = Object.entries(MEASURE_CUP_TEXT).map((v) => ({
   value: v[0],
 }));
 
+const permission_types = Object.entries(PER_TEXT_STATUS).map((v) => ({
+  label: v[1],
+  value: v[0],
+}));
+
+const permission_type = [];
+
 const formRef = ref(null);
 const modalRef = ref(null);
 const product_id = ref(props.product?.id || null);
@@ -46,24 +54,24 @@ const form = ref({
     ru: props?.product?.title?.ru || "",
   },
   measure_type: props?.product?.measure_type?.id
-    ? {
-        value: props?.product?.measure_type?.id,
-        label: props?.product?.measure_type?.title?.uz,
-      }
+    ? measure_types.find(
+        (item) => item.value == props?.product?.measure_type?.id
+      )
     : measure_types.find((item) => item.value == 2),
   calories: props?.product?.calories || "",
-  measure_description: props?.product?.measure_description || "",
-  permission_description: props?.product?.permission_description || "",
-  measure_cup:
-    props?.product?.measure_cup?.id ||
-    measure_cup_types.find((item) => item.value == 1),
+  permission_description: {
+    uz: props?.product?.permission_description?.uz || "",
+    ru: props?.product?.permission_description?.ru || "",
+  },
+  measure_cup: props?.product?.measure_cup?.id
+    ? measure_cup_types.find((item) => item.value == 1)
+    : null,
   measure_cup_value: props?.product?.measure_cup_value || "",
 });
 
 async function tryToSave() {
-  shouldCheckImageError.value = true;
   const hasError = !(await formRef.value.validate());
-  if (hasError || !imageValidate.value) return resetValidation(5000);
+  if (hasError) return resetValidation(5000);
 
   $q.loading.show();
   const fd = new FormData();
@@ -75,12 +83,12 @@ async function tryToSave() {
 
   fd.append("title[uz]", form.value.title.uz);
   fd.append("title[ru]", form.value.title.ru);
-  fd.append("measure_type", form.value.measure_type);
+  fd.append("measure_type_id", form.value.measure_type.value);
   fd.append("calories", form.value.calories);
-  fd.append("measure_cup", form.value.measure_cup);
+  fd.append("measure_cup_id", form.value.measure_cup.value || "");
   fd.append("measure_cup_value", form.value.measure_cup_value);
-  fd.append("measure_description", form.value.measure_description);
-  fd.append("permission_description", form.value.permission_description);
+  fd.append("permission_description[uz]", form.value.permission_description.uz);
+  fd.append("permission_description[ru]", form.value.permission_description.ru);
 
   const res = product_id.value
     ? await productCategory.updateById(product_id.value, fd)
@@ -102,33 +110,28 @@ async function tryToSave() {
     timeout: 2000,
   });
   $q.loading.hide();
-  emit("added");
+  emit("change");
 }
 
-let shouldCheckImageError = ref(false);
-const imageValidate = computed(() => {
-  if (!shouldCheckImageError.value) return true;
-  return form.value.image;
-});
 setTimeout(() => {
   console.log("props", props?.product);
 }, 1000);
 function resetData() {
   resetValidation();
-  (form.value.image = null), (form.value.title.uz = "");
+  form.value.image = null;
+  form.value.title.uz = "";
   form.value.title.ru = "";
-  form.value.measure_type = null;
+  form.value.measure_type = measure_types.find((item) => item.value == 2);
   form.value.calories = "";
-  form.value.measure_description = "";
-  form.value.permission_description = "";
-  form.value.measure_cup = null;
+  form.value.permission_description.uz = "";
+  form.value.permission_description.ru = "";
+  form.value.measure_cup = measure_cup_types.find((item) => item.value == 1);
   form.value.measure_cup_value = "";
 }
 let resetTimeout = 0;
 function resetValidation(timeout = 0) {
   clearTimeout(resetTimeout);
   resetTimeout = setTimeout(() => {
-    shouldCheckImageError.value = false;
     formRef.value?.resetValidation();
   }, timeout);
 }
@@ -142,9 +145,33 @@ const calory_title = {
 
 const weight_cup_title = {
   1: "osh qoshiqdagi",
-  2: "piyoladagi",
+  3: "piyoladagi",
+  4: "choy qoshiqdagi",
 };
 
+const permission_texts = {
+  one_week: {
+    uz: "haftada 1 marta",
+    ru: "в неделю один раз",
+  },
+  one_10day: {
+    uz: "10 kunda 1 marta",
+    ru: "1 раз в 10 дней",
+  },
+  one_2week: {
+    uz: "2 haftada 1 marta",
+    ru: "1 раз в 2 недели",
+  },
+};
+
+function setDefaultPermissionText(item) {
+  console.log("item", item);
+  form.value.permission_description = permission_texts[item.value];
+}
+
+function changeType() {
+  form.value.measure_cup_value = "";
+}
 defineExpose({
   open() {
     modalRef.value.open();
@@ -174,9 +201,6 @@ defineExpose({
             :urlImage="form.image"
             title="Rasmni yuklang"
           />
-          <div v-if="!imageValidate" class="negative_text">
-            Mahsulot rasmini yuklang
-          </div>
         </div>
         <div class="col">
           <div class="form-label">Nomi (UZ)</div>
@@ -205,6 +229,7 @@ defineExpose({
             outlined
             :options="measure_types"
             :rules="[validate.required]"
+            @update:model-value="changeType"
           />
         </div>
 
@@ -235,7 +260,7 @@ defineExpose({
 
           <div class="col">
             <div class="form-label">
-              Bitta {{ weight_cup_title[form.measure_cup.value] }} og'irligi
+              Bitta {{ weight_cup_title[form.measure_cup?.value] }} og'irligi
               gramda
             </div>
             <BaseInput
@@ -247,6 +272,45 @@ defineExpose({
             />
           </div>
         </template>
+
+        <div class="col">
+          <div class="form-label">Cheklov uchun izoh (UZ)</div>
+          <BaseInput
+            v-model="form.permission_description.uz"
+            type="textarea"
+            outlined
+            placeholder="Kiriting"
+            :rules="[
+              form.permission_description.ru?.length ? validate.required : true,
+            ]"
+          />
+        </div>
+
+        <div class="col">
+          <div class="form-label">Cheklov uchun izoh (RU)</div>
+          <BaseInput
+            v-model="form.permission_description.ru"
+            type="textarea"
+            outlined
+            placeholder="Kiriting"
+            :rules="[
+              form.permission_description.uz?.length ? validate.required : true,
+            ]"
+          />
+        </div>
+
+        <div class="col full_width">
+          <template v-for="item in permission_types" :key="item.value">
+            <q-chip
+              @click="setDefaultPermissionText(item)"
+              clickable
+              color="primary"
+              text-color="white"
+            >
+              {{ item.label }}
+            </q-chip>
+          </template>
+        </div>
       </q-form>
       <footer class="flex justify-end mt-3">
         <q-btn

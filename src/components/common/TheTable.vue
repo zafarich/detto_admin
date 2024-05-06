@@ -134,7 +134,7 @@ defineExpose({
 <template>
   <q-table
     v-bind="$attrs"
-    class="table no-shadow my-6"
+    class="table no-shadow my-2"
     separator="horizontal"
     loading-label="Yuklash..."
     :columns="columns"
@@ -187,7 +187,6 @@ defineExpose({
       <q-select
         v-model="pagination.per_page"
         @update:model-value="changePerPage"
-        dropdown-icon="img:/images/icons/chevron_down_16.svg"
         class="table-view-select"
         outlined
         :options="[10, 25, 50]"

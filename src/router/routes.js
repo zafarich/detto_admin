@@ -32,6 +32,11 @@ const routes = [
         name: "menu",
         component: () => import("src/pages/menu/IndexPage.vue"),
       },
+      {
+        path: "menu/:id",
+        name: "menu-detail",
+        component: () => import("src/pages/menu/MenuDetail.vue"),
+      },
     ],
   },
 

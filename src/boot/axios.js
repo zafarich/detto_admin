@@ -22,6 +22,13 @@ export default boot(({ app }) => {
   };
   api.interceptors.response.use(
     (response) => {
+      const status_code = response.data?.status_code;
+
+      if (status_code === 401) {
+        logout();
+        return { data: { result: null, error: true } };
+      }
+
       return response?.data || response;
     },
     async (error) => {

@@ -13,4 +13,5 @@ export const tableHeader = {
   static: "O'zgarmas",
   measure_type: "O'lchami",
   calories: "Kaloriyasi",
+  title: "Nomlanishi",
 };

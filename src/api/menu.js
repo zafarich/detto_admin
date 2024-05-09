@@ -14,6 +14,6 @@ export async function updateById(id, payload) {
   return data;
 }
 export async function deleteById(id) {
-  const { data } = await api.delete(url + "/delete/" + id);
+  const { data } = await api.delete(url + "menu-part/delete/" + id);
   return data;
 }

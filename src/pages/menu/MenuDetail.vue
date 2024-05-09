@@ -2,13 +2,25 @@
 import { computed, nextTick, onMounted, ref } from "vue-demi";
 import { useRouter, useRoute } from "vue-router";
 
+import { useQuasar } from "quasar";
+
+import DeleteTableItem from "src/components/common/DeleteTableItem.vue";
+import AddEditMenu from "./modules/AddEditMenu.vue";
+
 import { useMenuStore } from "src/stores/menu";
 
 const route = useRoute();
 const router = useRouter();
+const $q = useQuasar();
 
 const menuStore = useMenuStore();
 
+const addEditMenuRef = ref(null);
+const editItem = ref({});
+const temp_active_item_id = ref(null);
+
+const render_key = ref(1);
+const deleteConfirmModel = ref(false);
 const data = ref(null);
 
 async function fetchData() {
@@ -46,6 +58,29 @@ const menu_types = computed(() => {
 
   return result;
 });
+function editMenuOpen(one_menu) {
+  editItem.value = one_menu;
+  render_key.value = render_key.value + 1;
+  setTimeout(() => {
+    addEditMenuRef.value.open();
+  }, 10);
+}
+function deleteData(id) {
+  deleteConfirmModel.value = true;
+  temp_active_item_id.value = id;
+}
+async function deleteConfirmAction() {
+  $q.loading.show();
+  try {
+    await menuStore.deleteById(temp_active_item_id.value);
+    fetchData();
+    deleteConfirmModel.value = false;
+  } catch {
+  } finally {
+    $q.loading.hide();
+  }
+}
+function productAddedOrChanged() {}
 </script>
 <template>
   <q-page v-if="data">
@@ -106,51 +141,53 @@ const menu_types = computed(() => {
               </div>
 
               <div class="menu-bottom">
-                <q-btn icon="edit" size="sm" outline dense color="primary" />
+                <div>
+                  <q-btn
+                    @click="editMenuOpen(one_menu)"
+                    class="mr-2"
+                    icon="edit"
+                    size="sm"
+                    outline
+                    dense
+                    color="primary"
+                  />
+                  <q-btn
+                    @click="deleteData(one_menu?.id)"
+                    icon="delete"
+                    size="sm"
+                    outline
+                    dense
+                    color="negative"
+                  />
+                </div>
                 <b class="all-calory">{{ one_menu.calories }} kkal</b>
               </div>
             </div>
           </div>
-          <div
-            v-for="(one_menu, index) in menu_type?.menus"
-            :key="one_menu.id"
-            class="one-menu-item"
-          >
-            <b class="mr-2">{{ index + 1 }}.</b>
-            <div class="menu-right">
-              <div class="products-wrap">
-                <div
-                  v-for="product in one_menu?.menu_part_products"
-                  :key="product.id"
-                  class="product-item"
-                >
-                  <div>
-                    {{ product?.product?.title?.uz }}
-                    {{ product?.measure_type_count }}
-                    {{ product?.product?.measure_type?.title?.uz }}
 
-                    {{
-                      product?.measure_cup_count
-                        ? `(${
-                            product?.measure_cup_count +
-                            " " +
-                            product?.product?.measure_cup?.title?.uz
-                          })`
-                        : ""
-                    }}
-                  </div>
-                  <b>{{ product?.calories }} kkal</b>
-                </div>
-              </div>
-
-              <div class="menu-bottom">
-                <q-btn icon="edit" size="sm" outline dense color="primary" />
-                <b class="all-calory">{{ one_menu.calories }} kkal</b>
-              </div>
-            </div>
+          <div class="add-wrap">
+            <q-btn
+              label="Menu qo'shish"
+              icon="add"
+              class="full-width"
+              no-caps
+              color="primary"
+            />
           </div>
         </div>
       </div>
+
+      <AddEditMenu
+        ref="addEditMenuRef"
+        :key="render_key"
+        :menu="editItem"
+        @change="productAddedOrChanged"
+      />
+
+      <DeleteTableItem
+        @confirm="deleteConfirmAction"
+        v-model="deleteConfirmModel"
+      />
     </div>
   </q-page>
 </template>
@@ -162,9 +199,12 @@ const menu_types = computed(() => {
   .menu-item {
     width: calc(100% / 3);
     border-right: 1px solid #ccc;
-    &:last-child {
+    &:nth-child(3) {
       border-right: none;
     }
+  }
+  .add-wrap {
+    padding: 12px;
   }
   .menu-header {
     display: flex;

@@ -330,7 +330,7 @@ defineExpose({
   max-width: 1000px;
 }
 .menu_title {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
 }
 .menu_calories {

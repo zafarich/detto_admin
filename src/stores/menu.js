@@ -15,8 +15,8 @@ export const useMenuStore = defineStore("menu", () => {
     return res;
   }
 
-  async function create(payload) {
-    const res = await api.create(payload);
+  async function createMenu(payload) {
+    const res = await api.createMenu(payload);
     return res;
   }
   async function updateById(id, payload) {
@@ -33,7 +33,7 @@ export const useMenuStore = defineStore("menu", () => {
     getMenuSizes,
     getMenuDetail,
     all_count,
-    create,
+    createMenu,
     deleteById,
     updateById,
   };

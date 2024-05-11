@@ -75,18 +75,19 @@ async function tryToSave() {
 
   $q.loading.show();
   const fd = new FormData();
-
-  fd.append(
-    "image",
-    typeof form.value.image === "string" ? null : form.value.image
-  );
+  if (form.value.image) {
+    fd.append(
+      "image",
+      typeof form.value.image === "string" ? null : form.value.image
+    );
+  }
 
   fd.append("title[uz]", form.value.title.uz);
   fd.append("title[ru]", form.value.title.ru);
   fd.append("measure_type_id", form.value.measure_type.value);
   fd.append("calories", form.value.calories);
-  fd.append("measure_cup_id", form.value.measure_cup.value || "");
-  fd.append("measure_cup_value", form.value.measure_cup_value);
+  fd.append("measure_cup_id", form.value.measure_cup?.value || "");
+  fd.append("measure_cup_value", form.value?.measure_cup_value);
   fd.append("permission_description[uz]", form.value.permission_description.uz);
   fd.append("permission_description[ru]", form.value.permission_description.ru);
 

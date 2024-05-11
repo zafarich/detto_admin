@@ -4,6 +4,10 @@ export async function fetch(params) {
   const { data } = await api(url + "/index", { params });
   return data;
 }
+export async function fetchAll(params) {
+  const { data } = await api(url + "/index/all");
+  return data;
+}
 export async function create(payload) {
   const res = await api.post(url + "/store", payload);
   return res;

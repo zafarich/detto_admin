@@ -11,6 +11,11 @@ export const useProductStore = defineStore("product", () => {
     return res?.result;
   }
 
+  async function fetchAll() {
+    const res = await api.fetchAll();
+    return res;
+  }
+
   async function create(payload) {
     const res = await api.create(payload);
     return res;
@@ -27,6 +32,7 @@ export const useProductStore = defineStore("product", () => {
 
   return {
     fetch,
+    fetchAll,
     all_count,
     create,
     deleteById,

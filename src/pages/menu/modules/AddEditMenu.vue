@@ -15,82 +15,94 @@ import {
   MEASURE_TYPE_2,
 } from "src/types/productTypes";
 import { useProductStore } from "src/stores/product";
+import { useMenuStore } from "src/stores/menu";
 import BaseSelect from "src/components/UI/BaseSelect.vue";
+
+import { useRouter, useRoute } from "vue-router";
+
+const route = useRoute();
+const router = useRouter();
 
 const props = defineProps({
   menu: {
     type: Object,
     default: () => {},
   },
+  products: {
+    type: Array,
+    default: () => [],
+  },
 });
 const $q = useQuasar();
 const emit = defineEmits(["change"]);
 const productCategory = useProductStore();
+const menuStore = useMenuStore();
 
-const measure_types = Object.entries(MEASURE_TYPE_TEXT).map((v) => ({
-  label: v[1],
-  value: v[0],
-}));
+// const measure_types = Object.entries(MEASURE_TYPE_TEXT).map((v) => ({
+//   label: v[1],
+//   value: v[0],
+// }));
 
-const measure_cup_types = Object.entries(MEASURE_CUP_TEXT).map((v) => ({
-  label: v[1],
-  value: v[0],
-}));
-
-const permission_types = Object.entries(PER_TEXT_STATUS).map((v) => ({
-  label: v[1],
-  value: v[0],
-}));
-
-const permission_type = [];
+// const measure_cup_types = Object.entries(MEASURE_CUP_TEXT).map((v) => ({
+//   label: v[1],
+//   value: v[0],
+// }));
 
 const formRef = ref(null);
 const modalRef = ref(null);
 const menu_id = ref(props.menu?.id || null);
 const form = ref({
-  image: props.menu?.image || null,
-  title: {
-    uz: props?.menu?.title?.uz || "",
-    ru: props?.menu?.title?.ru || "",
-  },
-  measure_type: props?.menu?.measure_type?.id
-    ? measure_types.find((item) => item.value == props?.menu?.measure_type?.id)
-    : measure_types.find((item) => item.value == 2),
-  calories: props?.menu?.calories || "",
-  permission_description: {
-    uz: props?.menu?.permission_description?.uz || "",
-    ru: props?.menu?.permission_description?.ru || "",
-  },
-  measure_cup: props?.menu?.measure_cup?.id
-    ? measure_cup_types.find((item) => item.value == 1)
-    : null,
-  measure_cup_value: props?.menu?.measure_cup_value || "",
+  menu_part_products: [
+    {
+      product: null,
+      measure_cup_count: 1,
+      measure_type_count: 1,
+      calories: 0,
+    },
+  ],
 });
+
+const products_options = ref(props.products);
 
 async function tryToSave() {
   const hasError = !(await formRef.value.validate());
   if (hasError) return resetValidation(5000);
 
   $q.loading.show();
-  const fd = new FormData();
 
-  fd.append(
-    "image",
-    typeof form.value.image === "string" ? null : form.value.image
-  );
+  const resData = {
+    menu_size_id: +route.params?.id,
+    menu_type_id: props.menu?.type,
+    calories: calculateAllProductCalories(),
+    menu_part_products: [],
+  };
 
-  fd.append("title[uz]", form.value.title.uz);
-  fd.append("title[ru]", form.value.title.ru);
-  fd.append("measure_type_id", form.value.measure_type.value);
-  fd.append("calories", form.value.calories);
-  fd.append("measure_cup_id", form.value.measure_cup.value || "");
-  fd.append("measure_cup_value", form.value.measure_cup_value);
-  fd.append("permission_description[uz]", form.value.permission_description.uz);
-  fd.append("permission_description[ru]", form.value.permission_description.ru);
+  form.value.menu_part_products.forEach((product) => {
+    if (!product.product) return;
 
-  const res = menu_id.value
-    ? await productCategory.updateById(menu_id.value, fd)
-    : await productCategory.create(fd);
+    let product_item = {
+      product_id: product?.product?.id,
+      calories: calculateOneProductCalories(product),
+    };
+
+    if (product?.measure_cup_count) {
+      product_item = {
+        ...product_item,
+        measure_cup_count: product.measure_cup_count,
+        measure_type_count:
+          product.measure_cup_count * product?.product?.measure_cup_value,
+      };
+    } else {
+      product_item = {
+        ...product_item,
+        measure_type_count: product.measure_type_count,
+      };
+    }
+
+    resData.menu_part_products.push(product_item);
+  });
+
+  const res = await menuStore.createMenu(resData);
 
   if (!res) {
     $q.loading.hide();
@@ -102,7 +114,7 @@ async function tryToSave() {
   $q.notify({
     progress: true,
     position: "top",
-    message: menu_id.value ? "O'zgartirildi" : "Qo'shiildi",
+    message: "Qo'shiildi",
     type: "positive",
     color: "primary",
     timeout: 2000,
@@ -111,20 +123,45 @@ async function tryToSave() {
   emit("change");
 }
 
+function changeProduct(index) {
+  const product_item = form.value?.menu_part_products?.[index]?.product;
+
+  if (product_item?.measure_cup) {
+    form.value.menu_part_products[index].measure_cup_count = 1;
+    form.value.menu_part_products[index].measure_type_count = null;
+  } else {
+    form.value.menu_part_products[index].measure_cup_count = null;
+    form.value.menu_part_products[index].measure_type_count = 1;
+  }
+}
+function filterFn(val, update) {
+  if (val === "") {
+    update(() => {
+      products_options.value = props.products;
+    });
+    return;
+  }
+
+  update(() => {
+    const needle = val.toLowerCase();
+    products_options.value = props.products.filter(
+      (v) => v.title.toLowerCase().indexOf(needle) > -1
+    );
+  });
+}
 setTimeout(() => {
   console.log("props", props?.menu);
 }, 1000);
 function resetData() {
+  form.value.menu_part_products = [
+    {
+      product: null,
+      measure_cup_count: 1,
+      measure_type_count: 1,
+      calories: 0,
+    },
+  ];
   resetValidation();
-  form.value.image = null;
-  form.value.title.uz = "";
-  form.value.title.ru = "";
-  form.value.measure_type = measure_types.find((item) => item.value == 2);
-  form.value.calories = "";
-  form.value.permission_description.uz = "";
-  form.value.permission_description.ru = "";
-  form.value.measure_cup = measure_cup_types.find((item) => item.value == 1);
-  form.value.measure_cup_value = "";
 }
 let resetTimeout = 0;
 function resetValidation(timeout = 0) {
@@ -134,42 +171,6 @@ function resetValidation(timeout = 0) {
   }, timeout);
 }
 
-const calory_title = {
-  1: "1 donadagi",
-  2: "100 gramdagi",
-  3: "100 ml dagi",
-  4: "1 bo'lakdagi",
-};
-
-const weight_cup_title = {
-  1: "osh qoshiqdagi",
-  3: "piyoladagi",
-  4: "choy qoshiqdagi",
-};
-
-const permission_texts = {
-  one_week: {
-    uz: "haftada 1 marta",
-    ru: "в неделю один раз",
-  },
-  one_10day: {
-    uz: "10 kunda 1 marta",
-    ru: "1 раз в 10 дней",
-  },
-  one_2week: {
-    uz: "2 haftada 1 marta",
-    ru: "1 раз в 2 недели",
-  },
-};
-
-function setDefaultPermissionText(item) {
-  console.log("item", item);
-  form.value.permission_description = permission_texts[item.value];
-}
-
-function changeType() {
-  form.value.measure_cup_value = "";
-}
 defineExpose({
   open() {
     modalRef.value.open();
@@ -178,17 +179,84 @@ defineExpose({
     modalRef.value.close();
   },
 });
+
+function capitalizeFirstLetter(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function calculateOneProductCalories(product) {
+  let calories = 0;
+  if (product?.product?.measure_cup) {
+    calories =
+      (product.measure_cup_count *
+        product?.product?.measure_cup_value *
+        product?.product?.calories) /
+      100;
+  } else {
+    calories = product.measure_type_count * product?.product?.calories;
+  }
+
+  return parseInt(calories);
+}
+
+function calculateAllProductCalories() {
+  let all = 0;
+
+  form.value.menu_part_products.forEach((product) => {
+    let calories = 0;
+    if (product?.product?.measure_cup) {
+      calories =
+        (product.measure_cup_count *
+          product?.product?.measure_cup_value *
+          product?.product?.calories) /
+        100;
+    } else {
+      calories = product.measure_type_count * product?.product?.calories;
+    }
+
+    all = all + calories;
+  });
+
+  return parseInt(all) || 0;
+}
+
+function changeCupOrCount(index, val) {
+  const product = form.value.menu_part_products[index];
+  const key = product?.measure_type_count
+    ? "measure_type_count"
+    : "measure_cup_count";
+  form.value.menu_part_products[index];
+
+  const new_value = form.value.menu_part_products[index]?.[key] + val;
+
+  if (new_value > 0) {
+    form.value.menu_part_products[index][key] = new_value;
+  }
+}
+
+function addProduct() {
+  form.value.menu_part_products.push({
+    product: null,
+    measure_cup_count: 1,
+    measure_type_count: 1,
+    calories: 0,
+  });
+}
+
+function deleteProduct(index) {
+  form.value.menu_part_products.splice(index, 1);
+}
 </script>
 <template>
-  <TheModal
-    ref="modalRef"
-    :title="menu_id ? 'Menuni o\'zgartirish' : 'Menu qo\'shish'"
-    class="add-menu-modal"
-  >
+  <TheModal ref="modalRef" title="Menu qo'shish" class="add-menu-modal">
     <template #content>
       <div class="flex justify-between">
-        <div class="menu_title">{{ menu?.menu_type?.title?.uz }}</div>
-        <div class="menu_calories">{{ menu?.calories }} kkal</div>
+        <div class="menu_title">
+          {{ capitalizeFirstLetter(menu?.title) }}
+        </div>
+        <div class="menu_calories">
+          {{ calculateAllProductCalories() }} kkal
+        </div>
       </div>
       <q-form
         ref="formRef"
@@ -196,122 +264,102 @@ defineExpose({
         class="form-row"
       >
         <div class="col full_width">
-          <div class="form-label">Mahsulot rasmi</div>
+          <template
+            v-for="(product, index) in form?.menu_part_products"
+            :key="index"
+          >
+            <div class="product-item-modal">
+              <div class="item1">
+                <div class="form-label">{{ index + 1 }} - Mahsulot</div>
+                <BaseSelect
+                  v-model="product.product"
+                  option-label="title"
+                  use-input
+                  input-debounce="0"
+                  @filter="filterFn"
+                  outlined
+                  :options="products_options"
+                  :rules="[validate.required]"
+                  @update:model-value="changeProduct(index)"
+                />
+              </div>
+              <div class="item2">
+                <template v-if="product.product">
+                  <div class="form-label">
+                    {{
+                      capitalizeFirstLetter(
+                        product?.product?.measure_cup?.title?.uz ||
+                          product?.product?.measure_type?.title?.uz
+                      )
+                    }}
+                  </div>
+                  <div class="item2-wrap">
+                    <q-btn
+                      @click="changeCupOrCount(index, -0.5)"
+                      outline
+                      color="primary"
+                      label="- 0.5"
+                    />
+                    <div class="title-count-cup">
+                      {{
+                        product?.product?.measure_cup
+                          ? product?.measure_cup_count
+                          : product?.measure_type_count
+                      }}
+                    </div>
+                    <q-btn
+                      @click="changeCupOrCount(index, 0.5)"
+                      outline
+                      color="primary"
+                      label="+ 0.5"
+                    />
 
-          <BaseImageUpload
-            v-model="form.image"
-            :urlImage="form.image"
-            title="Rasmni yuklang"
-          />
-        </div>
-        <div class="col">
-          <div class="form-label">Nomi (UZ)</div>
-          <BaseInput
-            v-model="form.title.uz"
-            outlined
-            :rules="[validate.required]"
-            placeholder="Nomini kiriting"
-          />
-        </div>
-        <div class="col">
-          <div class="form-label">Nomi (RU)</div>
-          <BaseInput
-            v-model="form.title.ru"
-            outlined
-            placeholder="Nomini kiriting"
-            :rules="[validate.required]"
-          />
-        </div>
-
-        <div class="col">
-          <div class="form-label">Turi</div>
-          <BaseSelect
-            v-model="form.measure_type"
-            placeholder="Turini kiriting"
-            outlined
-            :options="measure_types"
-            :rules="[validate.required]"
-            @update:model-value="changeType"
-          />
-        </div>
-
-        <div class="col">
-          <div class="form-label">
-            Kaloriyasi ( {{ calory_title[form.measure_type?.value] }} )
-          </div>
-          <BaseInput
-            v-model="form.calories"
-            outlined
-            placeholder="Kaloriyani kiriting"
-            mask="#####"
-            :rules="[validate.required]"
-          />
-        </div>
-
-        <template v-if="form.measure_type.value == MEASURE_TYPE_2">
-          <div class="col">
-            <div class="form-label">O'lchov narsasi</div>
-            <BaseSelect
-              v-model="form.measure_cup"
-              placeholder="Tanlang"
-              outlined
-              :options="measure_cup_types"
-              :rules="[validate.required]"
-            />
-          </div>
-
-          <div class="col">
-            <div class="form-label">
-              Bitta {{ weight_cup_title[form.measure_cup?.value] }} og'irligi
-              gramda
+                    <div
+                      v-if="product?.product?.measure_cup"
+                      class="ml-gr-title"
+                    >
+                      =
+                      {{
+                        product?.measure_cup_count *
+                        product?.product?.measure_cup_value
+                      }}
+                      {{ product?.product?.measure_type?.title?.uz }}
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <div class="item3">
+                <template v-if="product.product">
+                  <div class="form-label">Kaloriyasi</div>
+                  <div class="wrap-56">
+                    {{ calculateOneProductCalories(product) }} kkal
+                  </div>
+                </template>
+              </div>
+              <div class="item4">
+                <div class="form-label">.</div>
+                <div class="wrap-56">
+                  <q-btn
+                    @click="deleteProduct(index)"
+                    v-if="form.menu_part_products?.length > 1"
+                    icon="delete"
+                    dense
+                    flat
+                    color="negative"
+                  />
+                </div>
+              </div>
             </div>
-            <BaseInput
-              v-model="form.measure_cup_value"
-              outlined
-              placeholder="Kiriting"
-              mask="#####"
-              :rules="[validate.required]"
-            />
-          </div>
-        </template>
-
-        <div class="col">
-          <div class="form-label">Cheklov uchun izoh (UZ)</div>
-          <BaseInput
-            v-model="form.permission_description.uz"
-            type="textarea"
-            outlined
-            placeholder="Kiriting"
-            :rules="[
-              form.permission_description.ru?.length ? validate.required : true,
-            ]"
-          />
-        </div>
-
-        <div class="col">
-          <div class="form-label">Cheklov uchun izoh (RU)</div>
-          <BaseInput
-            v-model="form.permission_description.ru"
-            type="textarea"
-            outlined
-            placeholder="Kiriting"
-            :rules="[
-              form.permission_description.uz?.length ? validate.required : true,
-            ]"
-          />
-        </div>
-
-        <div class="col full_width">
-          <template v-for="item in permission_types" :key="item.value">
-            <q-chip
-              @click="setDefaultPermissionText(item)"
-              clickable
-              color="primary"
-              text-color="white"
-            >
-              {{ item.label }}
-            </q-chip>
           </template>
+
+          <q-btn
+            @click="addProduct"
+            label="Mahsulot qo'shish"
+            icon="add"
+            outline
+            color="primary"
+            class="mt-4"
+          />
         </div>
       </q-form>
       <footer class="flex justify-end mt-3">
@@ -337,5 +385,55 @@ defineExpose({
   font-weight: 600;
   font-size: 18px;
   color: $primary;
+}
+
+.product-item-modal {
+  display: flex;
+  margin: 0px -15px;
+  margin-bottom: 20px;
+  .item1 {
+    width: 40%;
+    padding: 0px 15px;
+  }
+  .item2 {
+    width: 40%;
+    padding: 0px 15px;
+    .ml-gr-title {
+      margin-left: 12px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .item2-wrap {
+      display: flex;
+      align-items: center;
+      height: 56px;
+      .title-count-cup {
+        width: 56px;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+      }
+    }
+  }
+  .item3 {
+    width: 10%;
+    padding: 0px 15px;
+    .wrap-56 {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+    }
+  }
+  .item4 {
+    width: 10%;
+    padding: 0px 15px;
+    .wrap-56 {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+    }
+  }
 }
 </style>

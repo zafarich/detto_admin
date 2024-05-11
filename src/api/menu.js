@@ -9,6 +9,11 @@ export async function getMenuDetail(id) {
   const { data } = await api(url + `menu/index/${id}`);
   return data;
 }
+export async function createMenu(payload) {
+  const res = await api.post(url + "menu-part/store", payload);
+  return res;
+}
+
 export async function updateById(id, payload) {
   const { data } = await api.post(url + "/update/" + id, payload);
   return data;

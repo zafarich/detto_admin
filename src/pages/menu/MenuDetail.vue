@@ -8,26 +8,29 @@ import DeleteTableItem from "src/components/common/DeleteTableItem.vue";
 import AddEditMenu from "./modules/AddEditMenu.vue";
 
 import { useMenuStore } from "src/stores/menu";
+import { useProductStore } from "src/stores/product";
 
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
 
 const menuStore = useMenuStore();
+const productStore = useProductStore();
 
-const addEditMenuRef = ref(null);
-const editItem = ref({});
+const addMenuRef = ref(null);
+const menuType = ref({});
 const temp_active_item_id = ref(null);
 
 const render_key = ref(1);
 const deleteConfirmModel = ref(false);
 const data = ref(null);
+const products = ref([]);
 
 async function fetchData() {
   await nextTick();
   const id = +route.params.id;
   data.value = (await menuStore.getMenuDetail(id)) || null;
-  console.log("data.value", data.value);
+  products.value = (await productStore.fetchAll()) || [null];
 }
 onMounted(fetchData);
 
@@ -58,11 +61,11 @@ const menu_types = computed(() => {
 
   return result;
 });
-function editMenuOpen(one_menu) {
-  editItem.value = one_menu;
+function openAddMenu(menu_type) {
+  menuType.value = menu_type;
   render_key.value = render_key.value + 1;
   setTimeout(() => {
-    addEditMenuRef.value.open();
+    addMenuRef.value.open();
   }, 10);
 }
 function deleteData(id) {
@@ -80,7 +83,9 @@ async function deleteConfirmAction() {
     $q.loading.hide();
   }
 }
-function productAddedOrChanged() {}
+function productAddedOrChanged() {
+  fetchData();
+}
 </script>
 <template>
   <q-page v-if="data">
@@ -143,15 +148,6 @@ function productAddedOrChanged() {}
               <div class="menu-bottom">
                 <div>
                   <q-btn
-                    @click="editMenuOpen(one_menu)"
-                    class="mr-2"
-                    icon="edit"
-                    size="sm"
-                    outline
-                    dense
-                    color="primary"
-                  />
-                  <q-btn
                     @click="deleteData(one_menu?.id)"
                     icon="delete"
                     size="sm"
@@ -167,6 +163,7 @@ function productAddedOrChanged() {}
 
           <div class="add-wrap">
             <q-btn
+              @click="openAddMenu(menu_type)"
               label="Menu qo'shish"
               icon="add"
               class="full-width"
@@ -178,10 +175,11 @@ function productAddedOrChanged() {}
       </div>
 
       <AddEditMenu
-        ref="addEditMenuRef"
+        ref="addMenuRef"
         :key="render_key"
-        :menu="editItem"
+        :menu="menuType"
         @change="productAddedOrChanged"
+        :products="products"
       />
 
       <DeleteTableItem

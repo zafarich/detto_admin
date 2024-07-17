@@ -125,7 +125,14 @@ async function tryToSave() {
 
 function changeProduct(index) {
   const product_item = form.value?.menu_part_products?.[index]?.product;
+  console.log("product_item", product_item);
 
+  if (!product_item?.measure_cup && product_item?.measure_type?.id === 2) {
+    form.value.menu_part_products[index].measure_cup_count = null;
+    form.value.menu_part_products[index].measure_type_count = 100;
+
+    return;
+  }
   if (product_item?.measure_cup) {
     form.value.menu_part_products[index].measure_cup_count = 1;
     form.value.menu_part_products[index].measure_type_count = null;
@@ -185,7 +192,16 @@ function capitalizeFirstLetter(word) {
 }
 
 function calculateOneProductCalories(product) {
+  console.log("product", product);
   let calories = 0;
+  if (
+    !product?.product?.measure_cup &&
+    product?.product?.measure_type?.id == 2
+  ) {
+    console.log("ss");
+    calories = (product.measure_type_count * product?.product?.calories) / 100;
+    return parseInt(calories);
+  }
   if (product?.product?.measure_cup) {
     calories =
       (product.measure_cup_count *
@@ -204,14 +220,23 @@ function calculateAllProductCalories() {
 
   form.value.menu_part_products.forEach((product) => {
     let calories = 0;
-    if (product?.product?.measure_cup) {
+    if (
+      !product?.product?.measure_cup &&
+      product?.product?.measure_type?.id == 2
+    ) {
+      console.log("ss");
       calories =
-        (product.measure_cup_count *
-          product?.product?.measure_cup_value *
-          product?.product?.calories) /
-        100;
+        (product.measure_type_count * product?.product?.calories) / 100;
     } else {
-      calories = product.measure_type_count * product?.product?.calories;
+      if (product?.product?.measure_cup) {
+        calories =
+          (product.measure_cup_count *
+            product?.product?.measure_cup_value *
+            product?.product?.calories) /
+          100;
+      } else {
+        calories = product.measure_type_count * product?.product?.calories;
+      }
     }
 
     all = all + calories;
@@ -295,10 +320,23 @@ function deleteProduct(index) {
                   </div>
                   <div class="item2-wrap">
                     <q-btn
-                      @click="changeCupOrCount(index, -0.5)"
+                      @click="
+                        changeCupOrCount(
+                          index,
+                          !product?.product?.measure_cup &&
+                            product?.product?.measure_type?.id === 2
+                            ? -50
+                            : -0.5
+                        )
+                      "
                       outline
                       color="primary"
-                      label="- 0.5"
+                      :label="`${
+                        !product?.product?.measure_cup &&
+                        product?.product?.measure_type?.id === 2
+                          ? '-50'
+                          : '- 0.5'
+                      }`"
                     />
                     <div class="title-count-cup">
                       {{
@@ -308,10 +346,23 @@ function deleteProduct(index) {
                       }}
                     </div>
                     <q-btn
-                      @click="changeCupOrCount(index, 0.5)"
+                      @click="
+                        changeCupOrCount(
+                          index,
+                          !product?.product?.measure_cup &&
+                            product?.product?.measure_type?.id === 2
+                            ? 50
+                            : 0.5
+                        )
+                      "
                       outline
                       color="primary"
-                      label="+ 0.5"
+                      :label="`${
+                        !product?.product?.measure_cup &&
+                        product?.product?.measure_type?.id === 2
+                          ? '+50'
+                          : '+ 0.5'
+                      }`"
                     />
 
                     <div

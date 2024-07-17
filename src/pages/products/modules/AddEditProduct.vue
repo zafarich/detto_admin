@@ -255,7 +255,6 @@ defineExpose({
               placeholder="Tanlang"
               outlined
               :options="measure_cup_types"
-              :rules="[validate.required]"
             />
           </div>
 
@@ -269,7 +268,6 @@ defineExpose({
               outlined
               placeholder="Kiriting"
               mask="#####"
-              :rules="[validate.required]"
             />
           </div>
         </template>

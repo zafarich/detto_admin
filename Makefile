@@ -3,5 +3,6 @@ build:
 rm: 
 	docker rm -f admin_front
 run:
-	docker run -d -it -p 3001:80 admin_front --name=admin_front
+	docker run -d -it -p 3001:80 --name admin_front admin_front
 rebuild: rm run
+

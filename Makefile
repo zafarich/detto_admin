@@ -1,5 +1,5 @@
 build:
-	docker system prune && docker build -t admin_front .
+	docker build -t admin_front .
 rm: 
 	docker rm -f admin_front
 run:
